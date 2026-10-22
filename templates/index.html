@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ImageForensics | Digital Evidence Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <a href="/" class="brand">Image<span>Forensics</span></a>
+        <span class="nav-label">DIGITAL FORENSICS TOOL</span>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">IMAGE EVIDENCE ANALYSIS</p>
+            <h1>Examine your image.<br><span>Understand its evidence.</span></h1>
+            <p class="subtitle">
+                Analyze image properties, inspect available metadata,
+                and calculate a SHA-256 hash using a simple forensic workflow.
+            </p>
+        </section>
+
+        <section class="upload-card">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">STEP 01</p>
+                    <h2>Upload image evidence</h2>
+                </div>
+                <span class="file-tag">JPG · JPEG · PNG</span>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <label class="drop-zone" for="image">
+                    <span class="upload-icon">↑</span>
+                    <strong id="file-label">Choose an image to examine</strong>
+                    <span>Click here to select a file from your computer</span>
+                    <input
+                        type="file"
+                        id="image"
+                        name="image"
+                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                        required
+                    >
+                </label>
+
+                <p class="file-note">Maximum file size: 10 MB</p>
+                <button type="submit" class="analyze-button">
+                    Analyze Image <span>→</span>
+                </button>
+            </form>
+        </section>
+
+        {% if error %}
+        <div class="message error">{{ error }}</div>
+        {% endif %}
+
+        {% if result %}
+        <section class="results">
+            <div class="results-title">
+                <div>
+                    <p class="eyebrow">ANALYSIS RESULTS</p>
+                    <h2>Evidence overview</h2>
+                </div>
+                <span class="status">Analysis completed</span>
+            </div>
+
+            <div class="summary-grid">
+                <article class="metric">
+                    <span>FILE NAME</span>
+                    <strong>{{ result.filename }}</strong>
+                </article>
+                <article class="metric">
+                    <span>FILE SIZE</span>
+                    <strong>{{ result.size }}</strong>
+                </article>
+                <article class="metric">
+                    <span>ANALYZED AT</span>
+                    <strong>{{ result.analyzed_at }}</strong>
+                </article>
+            </div>
+
+            <div class="metadata-card">
+                <h3>Image metadata</h3>
+                {% for key, value in result.metadata.items() %}
+                <div class="metadata-row">
+                    <span>{{ key }}</span>
+                    <strong>{{ value }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="hash-card">
+                <p class="eyebrow">FILE INTEGRITY</p>
+                <h3>SHA-256 Hash</h3>
+                <code id="hash-value">{{ result.sha256 }}</code>
+                <button type="button" class="copy-button" onclick="copyHash()">
+                    Copy hash
+                </button>
+                <p class="disclaimer">
+                    This hash can help verify whether the file's bytes change
+                    between checks. It does not establish the image's origin
+                    or prove that the image has never been edited.
+                </p>
+            </div>
+            
+            <div class="ela-card">
+                <p class="eyebrow">IMAGE MANIPULATION SCREENING</p>
+                <h3>Error Level Analysis (ELA)</h3>
+
+                {% if result.ela_available %}
+                <p class="ela-description">
+                    This visualization amplifies differences between the uploaded JPEG
+                    and a recompressed copy. Inspect unusual patterns alongside the
+                    original image.
+                </p>
+
+                <div class="ela-image-container">
+                    <img src="{{ result.ela_url }}"
+                        alt="Error Level Analysis visualization">
+                </div>
+
+                <p class="disclaimer">
+                    ELA is an investigative aid, not a definitive manipulation detector.
+                    Compression, resizing, editing and other processing can affect the
+                    result. Bright regions do not automatically indicate tampering.
+                </p>
+                {% else %}
+                <p class="ela-description">
+                    ELA is available in this version for JPEG images only.
+                    Upload a JPG or JPEG file to perform this analysis.
+                </p>
+                {% endif %}
+            </div>
+
+        </section>
+        {% endif %}
+
+        <footer>
+            <p>ImageForensics · Academic Mini-Project</p>
+            <p>Forensic indicators support investigation; they are not proof by themselves.</p>
+        </footer>
+    </main>
+
+    <script>
+        const imageInput = document.getElementById("image");
+        const fileLabel = document.getElementById("file-label");
+
+        imageInput.addEventListener("change", () => {
+            fileLabel.textContent = imageInput.files.length
+                ? imageInput.files[0].name
+                : "Choose an image to examine";
+        });
+
+        async function copyHash() {
+            const hash = document.getElementById("hash-value").textContent;
+            try {
+                await navigator.clipboard.writeText(hash);
+                document.querySelector(".copy-button").textContent = "Copied!";
+            } catch {
+                alert("Copy unavailable. Please select and copy the hash manually.");
+            }
+        }
+    </script>
+</body>
+</html>
